@@ -1,22 +1,22 @@
-# 📄 Documentação do Código: Previsão de Preços de Imóveis com SVR
+#📄Documentação do Código: Previsão de Preços de Imóveis com SVR
 
-## ✍️ Descrição Geral
+##✍Descrição Geral
 Este código utiliza a Regressão de Vetores de Suporte (SVR) para prever os preços de imóveis em função de características temporais. Os dados são carregados de um arquivo Excel e processados para gerar previsões para imóveis com 1 a 4 dormitórios.
 
-## 📚 Bibliotecas Utilizadas
+##📚Bibliotecas Utilizadas
 - `pandas`: Para manipulação de dados.
 - `numpy`: Para operações numéricas.
 - `sklearn`: Para implementação do modelo SVR, pré-processamento e avaliação.
 - `matplotlib`: Para visualização dos dados e previsões.
 - `datetime`: Para manipulação de datas.
 
-## 🖥️ Estrutura do Código
+##🖥️Estrutura do Código
 
-### 1. Carregamento de Dados
+###1.Carregamento de Dados
 ```python
 df = pd.read_excel('dataframe.xlsx')
 
-### 2. Pré-processamento de Dados
+###2.Pré-processamento de Dados
 - Conversão das datas para formato ordinal.
 - Criação de características polinomiais (quadrado e cubo das datas).
 df['data'] = pd.to_datetime(df['data'])
@@ -24,7 +24,7 @@ df['data_ord'] = df['data'].map(datetime.toordinal)
 df['data_ord_quadrado'] = df['data_ord'] ** 2
 df['data_ord_cubo'] = df['data_ord'] ** 3
 
-### 3. Definição de Variáveis
+###3.Definição de Variáveis
 Definição das variáveis independentes (X) e dependentes (y1, y2, y3, y4).
 
 X = df[['data_ord', 'data_ord_quadrado', 'data_ord_cubo']].values
