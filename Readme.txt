@@ -33,7 +33,7 @@ y2 = df['2d'].values
 y3 = df['3d'].values
 y4 = df['4d'].values
 
-### 4. Escalonamento dos Dados
+###4.Escalonamento dos Dados
 Os dados são escalonados para melhorar o desempenho do modelo SVR.
 
 escalonador_X = StandardScaler()
@@ -48,7 +48,7 @@ y2_escalonado = escalonador_y2.fit_transform(y2.reshape(-1, 1))
 y3_escalonado = escalonador_y3.fit_transform(y3.reshape(-1, 1))
 y4_escalonado = escalonador_y4.fit_transform(y4.reshape(-1, 1))
 
-### 5. Busca de Parâmetros com GridSearchCV
+###5.Busca de Parâmetros com GridSearchCV
 Configuração do GridSearchCV para encontrar os melhores parâmetros para o modelo SVR.
 
 param_grid = {
@@ -63,36 +63,36 @@ def melhor_modelo_svr(X, y):
     print(f"Melhores parâmetros: {busca_grid.best_params_}")
     return busca_grid.best_estimator_
 
-### 6. Divisão em Conjuntos de Treino e Teste
+###6.Divisão em Conjuntos de Treino e Teste
 Os dados são divididos em conjuntos de treino (80%) e teste (20%).
 
 X_treino, X_teste, y1_treino, y1_teste = train_test_split(X_escalonado, y1_escalonado, test_size=0.2, random_state=42)
 [Repetido para y2, y3, e y4...]
 
-### 7. Treinamento dos Modelos
+###7.Treinamento dos Modelos
 Os modelos SVR são treinados usando os dados de treino.
 
 modelo1 = melhor_modelo_svr(X_treino, y1_treino)
 [Repetido para modelo2, modelo3, e modelo4...]
 
-### 8. Previsões e Avaliação
+###8.Previsões e Avaliação
 As previsões são realizadas sobre o conjunto de teste e as métricas de desempenho são calculadas.
 
 y1_teste_pred = escalonador_y1.inverse_transform(modelo1.predict(X_teste).reshape(-1, 1))
 [# Cálculo de MSE, MAE, e R² para cada modelo...]
 
-### 9. Função de Previsão
+###9.Função de Previsão
 
 def prever_imovel(data_prevista):
 [Lógica de previsão...]
 
-### 10. Visualização
+###10.Visualização
 Resultados e previsões são visualizados em um gráfico.
 
 plt.figure(figsize=(10, 6))
 [Plotagem de dados reais e previsões...]
 
-## 🔘 Uso do código
+##🔘Uso do código
 Para prever o preço de imóveis, ajuste a variável mes e ano na seção de exemplo de uso da previsão e execute o código.
 
 mes = 12
