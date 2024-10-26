@@ -4,7 +4,7 @@
 ## ✍ Descrição Geral
 Este código utiliza a Regressão de Vetores de Suporte (SVR) para prever os preços de imóveis em função de características temporais. Os dados são carregados de um arquivo Excel e processados para gerar previsões para imóveis com 1 a 4 dormitórios.
 
-##📚 Bibliotecas Utilizadas
+## 📚 Bibliotecas Utilizadas
 - `pandas`: Para manipulação de dados.
 - `numpy`: Para operações numéricas.
 - `sklearn`: Para implementação do modelo SVR, pré-processamento e avaliação.
