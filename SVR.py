@@ -39,9 +39,9 @@ y2_escalonado = escalonador_y2.fit_transform(y2.reshape(-1, 1))
 y3_escalonado = escalonador_y3.fit_transform(y3.reshape(-1, 1))
 y4_escalonado = escalonador_y4.fit_transform(y4.reshape(-1, 1))
 
-# Configurar GridSearchCV para SVR com uma gama maior de parâmetros
+# Configurar GridSearchCV para SVR
 param_grid = {
-    'C': [0.1, 1, 10, 100, 1000],  # Testando uma gama mais ampla de C
+    'C': [0.1, 1, 10, 100, 1000],
     'epsilon': [0.01, 0.1, 0.5, 1],
     'gamma': ['scale', 'auto']
 }
@@ -71,27 +71,17 @@ y2_teste_pred = escalonador_y2.inverse_transform(modelo2.predict(X_teste).reshap
 y3_teste_pred = escalonador_y3.inverse_transform(modelo3.predict(X_teste).reshape(-1, 1))
 y4_teste_pred = escalonador_y4.inverse_transform(modelo4.predict(X_teste).reshape(-1, 1))
 
-# Calcular o MSE e MAE para o conjunto de teste
+# Calcular o MSE para o conjunto de teste
 mse_y1_teste = mean_squared_error(escalonador_y1.inverse_transform(y1_teste), y1_teste_pred)
 mse_y2_teste = mean_squared_error(escalonador_y2.inverse_transform(y2_teste), y2_teste_pred)
 mse_y3_teste = mean_squared_error(escalonador_y3.inverse_transform(y3_teste), y3_teste_pred)
 mse_y4_teste = mean_squared_error(escalonador_y4.inverse_transform(y4_teste), y4_teste_pred)
 
-mae_y1_teste = mean_absolute_error(escalonador_y1.inverse_transform(y1_teste), y1_teste_pred)
-mae_y2_teste = mean_absolute_error(escalonador_y2.inverse_transform(y2_teste), y2_teste_pred)
-mae_y3_teste = mean_absolute_error(escalonador_y3.inverse_transform(y3_teste), y3_teste_pred)
-mae_y4_teste = mean_absolute_error(escalonador_y4.inverse_transform(y4_teste), y4_teste_pred)
-
-r2_y1_teste = r2_score(escalonador_y1.inverse_transform(y1_teste), y1_teste_pred)
-r2_y2_teste = r2_score(escalonador_y2.inverse_transform(y2_teste), y2_teste_pred)
-r2_y3_teste = r2_score(escalonador_y3.inverse_transform(y3_teste), y3_teste_pred)
-r2_y4_teste = r2_score(escalonador_y4.inverse_transform(y4_teste), y4_teste_pred)
-
 print("========Desempenho no Conjunto de Teste========")
-print(f"Imóveis com 1 dormitório: MSE={mse_y1_teste:.2f}, MAE={mae_y1_teste:.2f}, R²={r2_y1_teste:.2f}")
-print(f"Imóveis com 2 dormitórios: MSE={mse_y2_teste:.2f}, MAE={mae_y2_teste:.2f}, R²={r2_y2_teste:.2f}")
-print(f"Imóveis com 3 dormitórios: MSE={mse_y3_teste:.2f}, MAE={mae_y3_teste:.2f}, R²={r2_y3_teste:.2f}")
-print(f"Imóveis com 4 dormitórios: MSE={mse_y4_teste:.2f}, MAE={mae_y4_teste:.2f}, R²={r2_y4_teste:.2f}")
+print(f"Imóveis com 1 dormitório: MSE={mse_y1_teste:.2f}")
+print(f"Imóveis com 2 dormitórios: MSE={mse_y2_teste:.2f}")
+print(f"Imóveis com 3 dormitórios: MSE={mse_y3_teste:.2f}")
+print(f"Imóveis com 4 dormitórios: MSE={mse_y4_teste:.2f}")
 
 # Função para previsão de valores de imóveis em uma data futura
 def prever_imovel(data_prevista):
