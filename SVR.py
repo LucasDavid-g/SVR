@@ -118,7 +118,7 @@ print(f"Imóveis com 3 dormitórios: R$ {previsao[2]:.2f}")
 print(f"Imóveis com 4 dormitórios: R$ {previsao[3]:.2f}")
 
 # Limitar os dados a 10 meses para trás
-data_inicio = data_futura - timedelta(days=30*10)
+data_inicio = data_futura - timedelta(days=30*12)
 dados_recentes = df[df['data'] >= data_inicio]
 
 # Adicionar previsões para os meses até a data futura
