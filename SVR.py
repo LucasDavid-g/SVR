@@ -25,9 +25,8 @@ df['ano'] = df['data'].dt.year
 inflacao_map = df_inflacao.set_index('ano')['percentual de inflacao']
 df['inflacao_acumulada'] = df['ano'].map(inflacao_map)
 
-# Verificar se há valores NaN na inflação e preencher
+# Verificar se há valores "NaN" na inflação e preencher
 if df['inflacao_acumulada'].isnull().any():
-    print("Aviso: Existem anos sem dados de inflação. Preenchendo valores ausentes com o último valor disponível.")
     df['inflacao_acumulada'] = df['inflacao_acumulada'].ffill()
 
 # === ETAPA 2: Criar Características Polinomiais ===
@@ -70,7 +69,7 @@ X_treino, X_teste, y4_treino, y4_teste = train_test_split(X_escalonado, y4_escal
 # === ETAPA 5: Treinamento dos Modelos ===
 
 # Parâmetros para otimização do SVR
-param_grid = {
+'''param_grid = {
     'C': [0.1, 1, 10, 100, 1000],
     'epsilon': [0.01, 0.01, 0.1, 0.5],
     'gamma': [0.01, 0.1, 1, 10]
@@ -80,7 +79,12 @@ def melhor_modelo_svr(X, y):
     busca_grid = GridSearchCV(SVR(kernel='rbf'), param_grid, cv=5, scoring='neg_mean_squared_error')
     busca_grid.fit(X, y.ravel())
     print(f"Melhores parâmetros: {busca_grid.best_params_}")
-    return busca_grid.best_estimator_
+    return busca_grid.best_estimator_'''
+
+def melhor_modelo_svr(X, y):
+    modelo = SVR(kernel='rbf', C=1000, epsilon=0.01, gamma=1)
+    modelo.fit(X, y.ravel())
+    return modelo
 
 # Treinar os modelos para cada variável dependente
 modelo1 = melhor_modelo_svr(X_treino, y1_treino)
@@ -88,8 +92,7 @@ modelo2 = melhor_modelo_svr(X_treino, y2_treino)
 modelo3 = melhor_modelo_svr(X_treino, y3_treino)
 modelo4 = melhor_modelo_svr(X_treino, y4_treino)
 
-# === ETAPA 6: Avaliar os Modelos ===
-
+'''=== ETAPA 6: Avaliar os Modelos ===
 def avaliar_modelo(modelo, X_teste, y_teste, escalonador):
     y_pred = modelo.predict(X_teste)
     y_pred_original = escalonador.inverse_transform(y_pred.reshape(-1, 1))
@@ -106,12 +109,14 @@ mse2, mae2, r22 = avaliar_modelo(modelo2, X_teste, y2_teste, escalonador_y2)
 mse3, mae3, r23 = avaliar_modelo(modelo3, X_teste, y3_teste, escalonador_y3)
 mse4, mae4, r24 = avaliar_modelo(modelo4, X_teste, y4_teste, escalonador_y4)
 
+# === ETAPA 7: Exibindo resultados ===
+
 # Exibir Resultados
 print("Desempenho no Conjunto de Teste:")
-print(f"Imóveis com 1 dormitório: MSE={mse1:.2f}, MAE={mae1:.2f}, R²={r21:.2f}")
-print(f"Imóveis com 2 dormitórios: MSE={mse2:.2f}, MAE={mae2:.2f}, R²={r22:.2f}")
-print(f"Imóveis com 3 dormitórios: MSE={mse3:.2f}, MAE={mae3:.2f}, R²={r23:.2f}")
-print(f"Imóveis com 4 dormitórios: MSE={mse4:.2f}, MAE={mae4:.2f}, R²={r24:.2f}")
+print(f"Imóveis com 1 dormitório: MSE={mse1:.2f}, MAE={mae1:.2f}, R²={r21}")
+print(f"Imóveis com 2 dormitórios: MSE={mse2:.2f}, MAE={mae2:.2f}, R²={r22}")
+print(f"Imóveis com 3 dormitórios: MSE={mse3:.2f}, MAE={mae3:.2f}, R²={r23}")
+print(f"Imóveis com 4 dormitórios: MSE={mse4:.2f}, MAE={mae4:.2f}, R²={r24}")'''
 
 # Função para previsão de valores de imóveis em uma data futura
 def prever_imovel(data_prevista):
@@ -132,7 +137,7 @@ def prever_imovel(data_prevista):
     return pred1[0][0], pred2[0][0], pred3[0][0], pred4[0][0]
 
 # Exemplo de uso da previsão para uma data específica
-mes = 11  # mês de previsão (EM CASO DE MESES ANTERIORES A 10, NÃO UTILIZE 0 (ZERO) ANTES)
+mes = 5  # mês de previsão (EM CASO DE MESES ANTERIORES A 10, NÃO UTILIZE 0 (ZERO) ANTES)
 ano = 2025
 data_futura = datetime(ano, mes, 1)
 
@@ -142,6 +147,8 @@ print(f"Imóveis com 1 dormitório: R$ {previsao[0]:.2f}")
 print(f"Imóveis com 2 dormitórios: R$ {previsao[1]:.2f}")
 print(f"Imóveis com 3 dormitórios: R$ {previsao[2]:.2f}")
 print(f"Imóveis com 4 dormitórios: R$ {previsao[3]:.2f}")
+
+# === Plotagem dos resultados para melhor vizualização histórica ===
 
 data_inicio = data_futura - timedelta(days=30*12) # Limita no plot os dados com diferença de 12 meses
 dados_recentes = df[df['data'] >= data_inicio]
@@ -202,4 +209,4 @@ if not dados_recentes.empty:
     plt.grid()
     plt.show()
 else:
-    plotar_ausencia_dados("Sem dados para além de 12 meses")
+    plotar_ausencia_dados("Sem dados para amostra além de 12 meses")
