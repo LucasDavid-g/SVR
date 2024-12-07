@@ -132,8 +132,8 @@ def prever_imovel(data_prevista):
     return pred1[0][0], pred2[0][0], pred3[0][0], pred4[0][0]
 
 # Exemplo de uso da previsão para uma data específica
-mes = 5  # mês de previsão (EM CASO DE MESES ANTERIORES A 10, NÃO UTILIZE 0 (ZERO) ANTES)
-ano = 2030
+mes = 11  # mês de previsão (EM CASO DE MESES ANTERIORES A 10, NÃO UTILIZE 0 (ZERO) ANTES)
+ano = 2025
 data_futura = datetime(ano, mes, 1)
 
 previsao = prever_imovel(data_futura)
@@ -143,7 +143,7 @@ print(f"Imóveis com 2 dormitórios: R$ {previsao[1]:.2f}")
 print(f"Imóveis com 3 dormitórios: R$ {previsao[2]:.2f}")
 print(f"Imóveis com 4 dormitórios: R$ {previsao[3]:.2f}")
 
-data_inicio = data_futura - timedelta(days=30*301) # Limita no plot os dados com diferença de 12 meses
+data_inicio = data_futura - timedelta(days=30*12) # Limita no plot os dados com diferença de 12 meses
 dados_recentes = df[df['data'] >= data_inicio]
 
 # Adicionar previsões para os meses até a data futura
@@ -161,33 +161,45 @@ while proximo_mes <= data_futura:
     datas_previstas.append(proximo_mes)
     proximo_mes += pd.DateOffset(months=1)
 
-# Plotar resultados
-plt.figure(figsize=(10, 6))
+def plotar_ausencia_dados(mensagem="Sem dados para além de 12 meses"):
+    plt.figure(figsize=(10, 6))
+    plt.text(0.5, 0.5, mensagem, fontsize=18, color='red', alpha=0.7, ha='center', va='center', transform=plt.gca().transAxes)
+    plt.title("Aviso de Ausência de Dados", fontsize=16)
+    plt.axis('off')  # Remover eixos para uma aparência mais limpa
+    plt.tight_layout()
+    plt.show()
+    plt.close()
 
-# Dados reais
-plt.plot(dados_recentes['data'], dados_recentes['1d'], color='blue', marker='o', label='Imóveis com 1 dormitório', alpha=0.6)
-plt.plot(dados_recentes['data'], dados_recentes['2d'], color='green', marker='o', label='Imóveis com 2 dormitórios', alpha=0.6)
-plt.plot(dados_recentes['data'], dados_recentes['3d'], color='red', marker='o', label='Imóveis com 3 dormitórios', alpha=0.6)
-plt.plot(dados_recentes['data'], dados_recentes['4d'], color='purple', marker='o', label='Imóveis com 4 dormitórios', alpha=0.6)
+if not dados_recentes.empty:
+    # Plotar resultados
+    plt.figure(figsize=(10, 6))
 
-# Adicionando previsões
-previsoes = np.array(previsoes)
-plt.plot(datas_previstas, previsoes[:, 0], color='blue', marker='o', linestyle='--', label='Imóveis com 1 dormitório (Previsão)')
-plt.plot(datas_previstas, previsoes[:, 1], color='green', marker='o', linestyle='--', label='Imóveis com 2 dormitórios (Previsão)')
-plt.plot(datas_previstas, previsoes[:, 2], color='red', marker='o', linestyle='--', label='Imóveis com 3 dormitórios (Previsão)')
-plt.plot(datas_previstas, previsoes[:, 3], color='purple', marker='o', linestyle='--', label='Imóveis com 4 dormitórios (Previsão)')
+    # Dados reais
+    plt.plot(dados_recentes['data'], dados_recentes['1d'], color='blue', marker='o', label='Imóveis com 1 dormitório', alpha=0.6)
+    plt.plot(dados_recentes['data'], dados_recentes['2d'], color='green', marker='o', label='Imóveis com 2 dormitórios', alpha=0.6)
+    plt.plot(dados_recentes['data'], dados_recentes['3d'], color='red', marker='o', label='Imóveis com 3 dormitórios', alpha=0.6)
+    plt.plot(dados_recentes['data'], dados_recentes['4d'], color='purple', marker='o', label='Imóveis com 4 dormitórios', alpha=0.6)
 
-# Conectar o último ponto real ao primeiro ponto previsto no plot
-plt.plot([dados_recentes['data'].iloc[-1], datas_previstas[0]], [dados_recentes['1d'].iloc[-1], previsoes[0][0]], color='blue', linestyle='--')
-plt.plot([dados_recentes['data'].iloc[-1], datas_previstas[0]], [dados_recentes['2d'].iloc[-1], previsoes[0][1]], color='green', linestyle='--')
-plt.plot([dados_recentes['data'].iloc[-1], datas_previstas[0]], [dados_recentes['3d'].iloc[-1], previsoes[0][2]], color='red', linestyle='--')
-plt.plot([dados_recentes['data'].iloc[-1], datas_previstas[0]], [dados_recentes['4d'].iloc[-1], previsoes[0][3]], color='purple', linestyle='--')
+    # Adicionando previsões
+    previsoes = np.array(previsoes)
+    plt.plot(datas_previstas, previsoes[:, 0], color='blue', marker='o', linestyle='--', label='Imóveis com 1 dormitório (Previsão)')
+    plt.plot(datas_previstas, previsoes[:, 1], color='green', marker='o', linestyle='--', label='Imóveis com 2 dormitórios (Previsão)')
+    plt.plot(datas_previstas, previsoes[:, 2], color='red', marker='o', linestyle='--', label='Imóveis com 3 dormitórios (Previsão)')
+    plt.plot(datas_previstas, previsoes[:, 3], color='purple', marker='o', linestyle='--', label='Imóveis com 4 dormitórios (Previsão)')
 
-plt.title('Previsão de Valores de Imóveis')
-plt.xlabel('Data')
-plt.ylabel('R$ / m²')
-plt.xticks(rotation=45)
-plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m-%Y'))
-plt.legend()
-plt.grid()
-plt.show()
+    # Conectar o último ponto real ao primeiro ponto previsto no plot
+    plt.plot([dados_recentes['data'].iloc[-1], datas_previstas[0]], [dados_recentes['1d'].iloc[-1], previsoes[0][0]], color='blue', linestyle='--')
+    plt.plot([dados_recentes['data'].iloc[-1], datas_previstas[0]], [dados_recentes['2d'].iloc[-1], previsoes[0][1]], color='green', linestyle='--')
+    plt.plot([dados_recentes['data'].iloc[-1], datas_previstas[0]], [dados_recentes['3d'].iloc[-1], previsoes[0][2]], color='red', linestyle='--')
+    plt.plot([dados_recentes['data'].iloc[-1], datas_previstas[0]], [dados_recentes['4d'].iloc[-1], previsoes[0][3]], color='purple', linestyle='--')
+
+    plt.title('Previsão de Valores de Imóveis')
+    plt.xlabel('Data')
+    plt.ylabel('R$ / m²')
+    plt.xticks(rotation=45)
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m-%Y'))
+    plt.legend()
+    plt.grid()
+    plt.show()
+else:
+    plotar_ausencia_dados("Sem dados para além de 12 meses")
