@@ -4,100 +4,126 @@ from sklearn.svm import SVR
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.model_selection import GridSearchCV, train_test_split
+from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from datetime import datetime, timedelta
 
-# Carregar dados
+# === ETAPA 1: Carregar os Dados ===
+
+# Carregar o DataFrame principal
 df = pd.read_excel('dataframe.xlsx')
-
-# Preprocessamento dos dados
 df['data'] = pd.to_datetime(df['data'])
-df['data_ord'] = df['data'].map(datetime.toordinal)  # Convertendo datas para formato ordinal
 
-# Criar novas características polinomiais
+# Carregar o DataFrame de inflação
+df_inflacao = pd.read_excel('inflacao.xlsx')
+df_inflacao['percentual de inflacao'] = df_inflacao['percentual de inflacao'].str.replace(',', '.').astype(float)
+df_inflacao['ano'] = df_inflacao['data referencia'].dt.year
+
+# Mapear inflação acumulada para o DataFrame principal
+df['ano'] = df['data'].dt.year
+inflacao_map = df_inflacao.set_index('ano')['percentual de inflacao']
+df['inflacao_acumulada'] = df['ano'].map(inflacao_map)
+
+# Verificar se há valores NaN na inflação e preencher
+if df['inflacao_acumulada'].isnull().any():
+    print("Aviso: Existem anos sem dados de inflação. Preenchendo valores ausentes com o último valor disponível.")
+    df['inflacao_acumulada'] = df['inflacao_acumulada'].ffill()
+
+# === ETAPA 2: Criar Características Polinomiais ===
+
+df['data_ord'] = df['data'].map(datetime.toordinal)
 df['data_ord_quadrado'] = df['data_ord'] ** 2
-df['data_ord_cubo'] = df['data_ord'] ** 3  # Adicionando uma nova feature cúbica
+df['data_ord_cubo'] = df['data_ord'] ** 3
 
-# Definir as variáveis independentes e dependentes
-X = df[['data_ord', 'data_ord_quadrado', 'data_ord_cubo']].values  # Usar variáveis originais e polinomiais
+# Variáveis independentes (X) e dependentes (y)
+X = df[['data_ord', 'data_ord_quadrado', 'data_ord_cubo', 'inflacao_acumulada']].values
 y1 = df['1d'].values
 y2 = df['2d'].values
 y3 = df['3d'].values
 y4 = df['4d'].values
 
-# Escalonamento dos dados
+# === ETAPA 3: Escalonamento ===
+
+# Escalonar X
 escalonador_X = StandardScaler()
+X_escalonado = escalonador_X.fit_transform(X)
+
+# Escalonar y
 escalonador_y1 = StandardScaler()
 escalonador_y2 = StandardScaler()
 escalonador_y3 = StandardScaler()
 escalonador_y4 = StandardScaler()
 
-X_escalonado = escalonador_X.fit_transform(X)
 y1_escalonado = escalonador_y1.fit_transform(y1.reshape(-1, 1))
 y2_escalonado = escalonador_y2.fit_transform(y2.reshape(-1, 1))
 y3_escalonado = escalonador_y3.fit_transform(y3.reshape(-1, 1))
 y4_escalonado = escalonador_y4.fit_transform(y4.reshape(-1, 1))
 
-# Configurar GridSearchCV para SVR
+# === ETAPA 4: Dividir os Dados em Treino e Teste ===
+
+X_treino, X_teste, y1_treino, y1_teste = train_test_split(X_escalonado, y1_escalonado, test_size=0.2, random_state=42)
+X_treino, X_teste, y2_treino, y2_teste = train_test_split(X_escalonado, y2_escalonado, test_size=0.2, random_state=42)
+X_treino, X_teste, y3_treino, y3_teste = train_test_split(X_escalonado, y3_escalonado, test_size=0.2, random_state=42)
+X_treino, X_teste, y4_treino, y4_teste = train_test_split(X_escalonado, y4_escalonado, test_size=0.2, random_state=42)
+
+# === ETAPA 5: Treinamento dos Modelos ===
+
+# Parâmetros para otimização do SVR
 param_grid = {
     'C': [0.1, 1, 10, 100, 1000],
-    'epsilon': [0.01, 0.1, 0.5, 1],
+    'epsilon': [0.01, 0.01, 0.1, 0.5],
     'gamma': ['scale', 'auto']
 }
 
-# Função para encontrar o melhor modelo SVR usando GridSearchCV
 def melhor_modelo_svr(X, y):
     busca_grid = GridSearchCV(SVR(kernel='rbf'), param_grid, cv=5, scoring='neg_mean_squared_error')
     busca_grid.fit(X, y.ravel())
     print(f"Melhores parâmetros: {busca_grid.best_params_}")
     return busca_grid.best_estimator_
 
-# Dividir dados em treino e teste (80% treino, 20% teste)
-X_treino, X_teste, y1_treino, y1_teste = train_test_split(X_escalonado, y1_escalonado, test_size=0.2, random_state=42)
-X_treino, X_teste, y2_treino, y2_teste = train_test_split(X_escalonado, y2_escalonado, test_size=0.2, random_state=42)
-X_treino, X_teste, y3_treino, y3_teste = train_test_split(X_escalonado, y3_escalonado, test_size=0.2, random_state=42)
-X_treino, X_teste, y4_treino, y4_teste = train_test_split(X_escalonado, y4_escalonado, test_size=0.2, random_state=42)
-
-# Treinamento dos modelos otimizados com os dados de treino
+# Treinar os modelos para cada variável dependente
 modelo1 = melhor_modelo_svr(X_treino, y1_treino)
 modelo2 = melhor_modelo_svr(X_treino, y2_treino)
 modelo3 = melhor_modelo_svr(X_treino, y3_treino)
 modelo4 = melhor_modelo_svr(X_treino, y4_treino)
 
-# Previsão nos dados de teste para cada conjunto de dados
-y1_teste_pred = escalonador_y1.inverse_transform(modelo1.predict(X_teste).reshape(-1, 1))
-y2_teste_pred = escalonador_y2.inverse_transform(modelo2.predict(X_teste).reshape(-1, 1))
-y3_teste_pred = escalonador_y3.inverse_transform(modelo3.predict(X_teste).reshape(-1, 1))
-y4_teste_pred = escalonador_y4.inverse_transform(modelo4.predict(X_teste).reshape(-1, 1))
+# === ETAPA 6: Avaliar os Modelos ===
 
-# Calcular o MSE, MAE e R2 para o conjunto de teste
-mse_y1_teste = mean_squared_error(escalonador_y1.inverse_transform(y1_teste), y1_teste_pred)
-mse_y2_teste = mean_squared_error(escalonador_y2.inverse_transform(y2_teste), y2_teste_pred)
-mse_y3_teste = mean_squared_error(escalonador_y3.inverse_transform(y3_teste), y3_teste_pred)
-mse_y4_teste = mean_squared_error(escalonador_y4.inverse_transform(y4_teste), y4_teste_pred)
+def avaliar_modelo(modelo, X_teste, y_teste, escalonador):
+    y_pred = modelo.predict(X_teste)
+    y_pred_original = escalonador.inverse_transform(y_pred.reshape(-1, 1))
+    y_teste_original = escalonador.inverse_transform(y_teste)
+    
+    mse = mean_squared_error(y_teste_original, y_pred_original)
+    mae = mean_absolute_error(y_teste_original, y_pred_original)
+    r2 = r2_score(y_teste_original, y_pred_original)
+    
+    return mse, mae, r2
 
-mae_y1_teste = mean_absolute_error(escalonador_y1.inverse_transform(y1_teste), y1_teste_pred)
-mae_y2_teste = mean_absolute_error(escalonador_y2.inverse_transform(y2_teste), y2_teste_pred)
-mae_y3_teste = mean_absolute_error(escalonador_y3.inverse_transform(y3_teste), y3_teste_pred)
-mae_y4_teste = mean_absolute_error(escalonador_y4.inverse_transform(y4_teste), y4_teste_pred)
+mse1, mae1, r21 = avaliar_modelo(modelo1, X_teste, y1_teste, escalonador_y1)
+mse2, mae2, r22 = avaliar_modelo(modelo2, X_teste, y2_teste, escalonador_y2)
+mse3, mae3, r23 = avaliar_modelo(modelo3, X_teste, y3_teste, escalonador_y3)
+mse4, mae4, r24 = avaliar_modelo(modelo4, X_teste, y4_teste, escalonador_y4)
 
-r2_y1_teste = r2_score(escalonador_y1.inverse_transform(y1_teste), y1_teste_pred)
-r2_y2_teste = r2_score(escalonador_y2.inverse_transform(y2_teste), y2_teste_pred)
-r2_y3_teste = r2_score(escalonador_y3.inverse_transform(y3_teste), y3_teste_pred)
-r2_y4_teste = r2_score(escalonador_y4.inverse_transform(y4_teste), y4_teste_pred)
-
-print("========Desempenho no Conjunto de Teste========")
-print(f"Imóveis com 1 dormitório: MSE={mse_y1_teste:.2f}", f"MAE={mae_y1_teste:.2f}", f"R2={r2_y1_teste:.2f}")
-print(f"Imóveis com 2 dormitórios: MSE={mse_y2_teste:.2f}", f"MAE={mae_y2_teste:.2f}", f"R2={r2_y2_teste:.2f}")
-print(f"Imóveis com 3 dormitórios: MSE={mse_y3_teste:.2f}", f"MAE={mae_y3_teste:.2f}", f"R2={r2_y3_teste:.2f}")
-print(f"Imóveis com 4 dormitórios: MSE={mse_y4_teste:.2f}", f"MAE={mae_y4_teste:.2f}", f"R2={r2_y4_teste:.2f}")
+# Exibir Resultados
+print("Desempenho no Conjunto de Teste:")
+print(f"Imóveis com 1 dormitório: MSE={mse1:.2f}, MAE={mae1:.2f}, R²={r21:.2f}")
+print(f"Imóveis com 2 dormitórios: MSE={mse2:.2f}, MAE={mae2:.2f}, R²={r22:.2f}")
+print(f"Imóveis com 3 dormitórios: MSE={mse3:.2f}, MAE={mae3:.2f}, R²={r23:.2f}")
+print(f"Imóveis com 4 dormitórios: MSE={mse4:.2f}, MAE={mae4:.2f}, R²={r24:.2f}")
 
 # Função para previsão de valores de imóveis em uma data futura
 def prever_imovel(data_prevista):
     data_prevista_ord = datetime.toordinal(data_prevista)
-    data_prevista_escalonada = escalonador_X.transform([[data_prevista_ord, data_prevista_ord**2, data_prevista_ord**3]])  # Adicionar a variável polinomial
-    
+    ano_previsto = data_prevista.year  # Obter o ano da data prevista
+    inflacao_prevista = inflacao_map.get(ano_previsto, inflacao_map.iloc[-1])  # Pegar a inflação acumulada do ano ou usar o último valor disponível
+
+    # Criar os dados para previsão incluindo todas as features
+    data_prevista_escalonada = escalonador_X.transform(
+        [[data_prevista_ord, data_prevista_ord**2, data_prevista_ord**3, inflacao_prevista]]
+    )
+
     pred1 = escalonador_y1.inverse_transform(modelo1.predict(data_prevista_escalonada).reshape(-1, 1))
     pred2 = escalonador_y2.inverse_transform(modelo2.predict(data_prevista_escalonada).reshape(-1, 1))
     pred3 = escalonador_y3.inverse_transform(modelo3.predict(data_prevista_escalonada).reshape(-1, 1))
@@ -117,8 +143,7 @@ print(f"Imóveis com 2 dormitórios: R$ {previsao[1]:.2f}")
 print(f"Imóveis com 3 dormitórios: R$ {previsao[2]:.2f}")
 print(f"Imóveis com 4 dormitórios: R$ {previsao[3]:.2f}")
 
-# Limitar os dados a 10 meses para trás
-data_inicio = data_futura - timedelta(days=30*12)
+data_inicio = data_futura - timedelta(days=30*12) # Limita no plot os dados com diferença de 12 meses
 dados_recentes = df[df['data'] >= data_inicio]
 
 # Adicionar previsões para os meses até a data futura
