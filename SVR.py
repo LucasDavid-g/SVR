@@ -73,7 +73,7 @@ X_treino, X_teste, y4_treino, y4_teste = train_test_split(X_escalonado, y4_escal
 param_grid = {
     'C': [0.1, 1, 10, 100, 1000],
     'epsilon': [0.01, 0.01, 0.1, 0.5],
-    'gamma': ['scale', 'auto']
+    'gamma': [0.01, 0.1, 1, 10]
 }
 
 def melhor_modelo_svr(X, y):
@@ -133,7 +133,7 @@ def prever_imovel(data_prevista):
 
 # Exemplo de uso da previsão para uma data específica
 mes = 5  # mês de previsão (EM CASO DE MESES ANTERIORES A 10, NÃO UTILIZE 0 (ZERO) ANTES)
-ano = 2025
+ano = 2030
 data_futura = datetime(ano, mes, 1)
 
 previsao = prever_imovel(data_futura)
@@ -143,7 +143,7 @@ print(f"Imóveis com 2 dormitórios: R$ {previsao[1]:.2f}")
 print(f"Imóveis com 3 dormitórios: R$ {previsao[2]:.2f}")
 print(f"Imóveis com 4 dormitórios: R$ {previsao[3]:.2f}")
 
-data_inicio = data_futura - timedelta(days=30*12) # Limita no plot os dados com diferença de 12 meses
+data_inicio = data_futura - timedelta(days=30*301) # Limita no plot os dados com diferença de 12 meses
 dados_recentes = df[df['data'] >= data_inicio]
 
 # Adicionar previsões para os meses até a data futura
